@@ -82,4 +82,10 @@ class LedgerEntry(StrictModel):
     api_response_id: str | None = None
     result: TriageResult
     human_verdict: Literal["accepted", "edited", "rejected"] | None = None
-    human_notes: str | None = None
+    human_notes: str | None = Field(default=None, max_length=1_000)
+
+
+class VerdictSubmission(StrictModel):
+    entry: LedgerEntry
+    verdict: Literal["accepted", "edited", "rejected"]
+    notes: str = Field(default="", max_length=1_000)

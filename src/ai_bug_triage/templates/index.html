@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="sk">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>AI Bug Triage Lab</title>
+    <link rel="icon" href="{{ url_for('static', path='/favicon.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+    <script src="{{ url_for('static', path='/app.js') }}" defer></script>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" aria-label="Projektová navigácia">
+        <a class="brand" href="/" aria-label="AI Bug Triage Lab domov">
+          <span class="brand-mark">AT</span>
+          <span><strong>AI Triage</strong><small>Decision Lab</small></span>
+        </a>
+
+        <nav>
+          <a class="nav-item active" href="#workspace"><span>01</span> Triage workspace</a>
+          <a class="nav-item" href="#safety"><span>02</span> Safety gate</a>
+          <a class="nav-item" href="#ledger"><span>03</span> Decision ledger</a>
+        </nav>
+
+        <div class="sidebar-note">
+          <span class="eyebrow">Pilot mode</span>
+          <strong>AI odporúča.<br>Človek rozhoduje.</strong>
+          <p>Žiadne automatické zmeny na GitHube.</p>
+        </div>
+      </aside>
+
+      <main>
+        <header class="topbar">
+          <div>
+            <span class="eyebrow">Security-first experiment</span>
+            <h1>Bug triage, ktorý ukazuje svoju neistotu.</h1>
+          </div>
+          <div id="server-status" class="server-status" aria-live="polite">
+            <span class="status-dot"></span>
+            <span>Kontrolujem server…</span>
+          </div>
+        </header>
+
+        <section class="safety-strip" id="safety">
+          <strong>Syntetické dáta iba</strong>
+          <span>Nevkladaj heslá, API kľúče, osobné údaje ani reálne zákaznícke logy.</span>
+          <span class="read-only-pill">Read-only</span>
+        </section>
+
+        <section class="workspace" id="workspace">
+          <form id="bug-form" class="panel form-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="step-number">01 / INPUT</span>
+                <h2>Opíš syntetický problém</h2>
+              </div>
+              <button type="button" id="load-sample" class="text-button">Načítať príklad</button>
+            </div>
+
+            <div class="field-row">
+              <label class="field compact">
+                <span>ID reportu</span>
+                <input id="bug-id" name="id" value="WEB-DEMO-001" maxlength="80" required>
+              </label>
+              <label class="field">
+                <span>Názov problému</span>
+                <input id="title" name="title" placeholder="Čo presne nefunguje?" maxlength="300" required>
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Popis a dopad</span>
+              <textarea id="description" name="description" rows="4" maxlength="20000" placeholder="Čo sa stalo a koho to blokuje?" required></textarea>
+            </label>
+
+            <label class="field">
+              <span>Kroky reprodukcie <small>jeden krok na riadok</small></span>
+              <textarea id="steps" name="steps" rows="4" placeholder="Otvoriť checkout&#10;Zmeniť adresu&#10;Potvrdiť podmienky"></textarea>
+            </label>
+
+            <div class="field-row">
+              <label class="field">
+                <span>Očakávané správanie</span>
+                <textarea id="expected" name="expected" rows="3" maxlength="5000"></textarea>
+              </label>
+              <label class="field">
+                <span>Skutočné správanie</span>
+                <textarea id="actual" name="actual" rows="3" maxlength="5000"></textarea>
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Prostredie</span>
+              <input id="environment" name="environment" maxlength="2000" placeholder="Syntetické prostredie, prehliadač, OS">
+            </label>
+
+            <div id="form-message" class="message" role="status" aria-live="polite"></div>
+
+            <div class="form-actions">
+              <button type="button" id="validate-button" class="secondary-button">Skontrolovať dáta</button>
+              <button type="submit" id="triage-button" class="primary-button">
+                <span>Spustiť AI triage</span><span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </form>
+
+          <section class="panel result-panel" aria-live="polite">
+            <div class="panel-heading">
+              <div>
+                <span class="step-number">02 / RECOMMENDATION</span>
+                <h2>Odporúčanie AI</h2>
+              </div>
+              <span id="model-badge" class="model-badge">{{ default_model }}</span>
+            </div>
+
+            <div id="empty-state" class="empty-state">
+              <div class="signal-orbit" aria-hidden="true"><span></span></div>
+              <h3>Výsledok čaká na report</h3>
+              <p>Najprv skontroluj dáta. AI výstup sa zobrazí ako návrh, nie ako rozhodnutie.</p>
+            </div>
+
+            <div id="result-content" class="result-content" hidden>
+              <div class="result-hero">
+                <div>
+                  <span class="eyebrow">AI summary</span>
+                  <p id="result-summary" class="summary"></p>
+                </div>
+                <div class="score-ring"><strong id="confidence-value">0%</strong><span>istota</span></div>
+              </div>
+
+              <div class="metrics-grid">
+                <div class="metric"><span>Závažnosť</span><strong id="severity-value"></strong></div>
+                <div class="metric"><span>Priorita</span><strong id="priority-value"></strong></div>
+                <div class="metric"><span>Akcia</span><strong id="action-value"></strong></div>
+                <div class="metric"><span>Citlivosť</span><strong id="sensitivity-value"></strong></div>
+              </div>
+
+              <div id="safety-flags" class="safety-flags"></div>
+
+              <div class="result-section">
+                <span class="eyebrow">Navrhované štítky</span>
+                <div id="label-list" class="tag-list"></div>
+              </div>
+
+              <div class="result-columns">
+                <div class="result-section">
+                  <span class="eyebrow">Chýbajúce informácie</span>
+                  <ul id="missing-list"></ul>
+                </div>
+                <div class="result-section">
+                  <span class="eyebrow">Doplňujúce otázky</span>
+                  <ul id="questions-list"></ul>
+                </div>
+              </div>
+
+              <div class="rationale-card">
+                <span class="eyebrow">Zdôvodnenie</span>
+                <p id="rationale-value"></p>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section class="panel review-panel" id="ledger">
+          <div>
+            <span class="step-number">03 / HUMAN VERDICT</span>
+            <h2>Potvrď alebo oprav rozhodnutie</h2>
+            <p>Verdikt sa uloží iba do lokálneho ignorovaného Decision Ledgeru.</p>
+          </div>
+          <div class="review-controls">
+            <div class="verdict-buttons" role="group" aria-label="Ľudský verdikt">
+              <button type="button" data-verdict="accepted">Prijať</button>
+              <button type="button" data-verdict="edited">Upraviť</button>
+              <button type="button" data-verdict="rejected">Zamietnuť</button>
+            </div>
+            <label class="field">
+              <span>Poznámka recenzenta</span>
+              <input id="human-notes" maxlength="1000" placeholder="Čo AI trafila alebo prehliadla?">
+            </label>
+            <button type="button" id="save-verdict" class="primary-button" disabled>Uložiť do ledgeru</button>
+            <div id="verdict-message" class="message" role="status" aria-live="polite"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

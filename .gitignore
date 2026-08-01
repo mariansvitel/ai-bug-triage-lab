@@ -22,5 +22,6 @@ artifacts/
 # Editors and operating systems
 .idea/
 .vscode/
+.playwright-cli/
 .DS_Store
 Thumbs.db
