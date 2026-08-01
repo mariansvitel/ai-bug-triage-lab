@@ -1,0 +1,13 @@
+{
+  "id": "BUG-DEMO-001",
+  "title": "Checkout confirmation button stays disabled",
+  "description": "After changing the delivery address, the confirmation button remains disabled.",
+  "steps_to_reproduce": [
+    "Open checkout with one product",
+    "Change the delivery address",
+    "Accept the terms"
+  ],
+  "expected_behavior": "The confirmation button becomes enabled.",
+  "actual_behavior": "The button remains disabled with no visible error.",
+  "environment": "Synthetic test environment, Firefox on Windows 11"
+}
