@@ -1,0 +1,43 @@
+name: Bug report
+description: Report a reproducible problem without secrets or personal data
+title: "[Bug]: "
+labels: ["needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include API keys, passwords, personal data, private logs, or exploit details.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the problem and its impact.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Open ...\n2. Select ...\n3. Observe ..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, browser/runtime, and app version; no identifying data.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety confirmation
+      options:
+        - label: I removed secrets, personal data, and confidential information.
+          required: true

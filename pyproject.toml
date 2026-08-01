@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ai-bug-triage-lab"
+version = "0.1.0"
+description = "Human-supervised, security-first AI bug triage research pilot"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "openai>=1.100.0,<3",
+  "pydantic>=2.10,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<10",
+  "ruff>=0.9,<1",
+]
+
+[project.scripts]
+ai-bug-triage = "ai_bug_triage.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ai_bug_triage"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
