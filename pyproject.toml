@@ -9,7 +9,7 @@ description = "Human-supervised, security-first AI bug triage research pilot"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-  "openai>=1.100.0,<3",
+  "openai>=1.100.0,<4",
   "pydantic>=2.10,<3",
 ]
 
