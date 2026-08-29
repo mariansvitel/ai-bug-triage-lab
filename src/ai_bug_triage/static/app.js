@@ -5,7 +5,9 @@ const verdictMessage = document.querySelector("#verdict-message");
 const triageButton = document.querySelector("#triage-button");
 const saveVerdictButton = document.querySelector("#save-verdict");
 let currentEntry = null;
+let currentReport = null;
 let selectedVerdict = null;
+let trackerIssues = [];
 
 const sample = {
   id: "WEB-DEMO-001",
@@ -39,9 +41,9 @@ function fillForm(value) {
   document.querySelector("#environment").value = value.environment;
 }
 
-async function api(path, payload) {
+async function api(path, payload, method = "POST") {
   const response = await fetch(path, {
-    method: "POST",
+    method,
     headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
     body: JSON.stringify(payload),
   });
@@ -110,6 +112,99 @@ function renderResult(entry) {
   document.querySelectorAll("[data-verdict]").forEach((button) => button.classList.remove("selected"));
 }
 
+function trackerStatusLabel(status) {
+  const labels = {
+    inbox: "Inbox",
+    investigating: "Investigating",
+    planned: "Planned",
+    resolved: "Resolved",
+  };
+  return labels[status] || status;
+}
+
+function renderTracker(data) {
+  trackerIssues = data.issues;
+  const summary = data.summary;
+  document.querySelector("#tracker-total").textContent = String(summary.total);
+  document.querySelector("#tracker-active").textContent = String(
+    summary.statuses.investigating + summary.statuses.planned,
+  );
+  document.querySelector("#tracker-resolved").textContent = String(summary.statuses.resolved);
+  document.querySelector("#tracker-confidence").textContent = `${Math.round(summary.average_confidence * 100)}%`;
+
+  const selectedStatus = document.querySelector("#tracker-filter").value;
+  const visibleIssues = trackerIssues.filter(
+    (issue) => selectedStatus === "all" || issue.status === selectedStatus,
+  );
+  const list = document.querySelector("#tracker-list");
+  const empty = document.querySelector("#tracker-empty");
+  list.replaceChildren();
+  empty.hidden = visibleIssues.length > 0;
+
+  visibleIssues.forEach((issue) => {
+    const card = document.createElement("article");
+    card.className = "issue-card";
+
+    const identity = document.createElement("div");
+    identity.className = "issue-identity";
+    const id = document.createElement("span");
+    id.className = "issue-id";
+    id.textContent = issue.report.id;
+    const title = document.createElement("strong");
+    title.textContent = issue.report.title;
+    const summaryText = document.createElement("p");
+    summaryText.textContent = issue.entry.result.summary;
+    identity.append(id, title, summaryText);
+
+    const signals = document.createElement("div");
+    signals.className = "issue-signals";
+    [
+      issue.entry.result.severity,
+      issue.entry.result.priority,
+      `${Math.round(issue.entry.result.confidence * 100)}% confidence`,
+      issue.entry.human_verdict || "pending review",
+    ].forEach((value) => {
+      const signal = document.createElement("span");
+      signal.textContent = value;
+      signals.append(signal);
+    });
+
+    const status = document.createElement("select");
+    status.className = "status-select";
+    status.setAttribute("aria-label", `Workflow state for ${issue.report.id}`);
+    ["inbox", "investigating", "planned", "resolved"].forEach((value) => {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = trackerStatusLabel(value);
+      option.selected = issue.status === value;
+      status.append(option);
+    });
+    status.addEventListener("change", async () => {
+      status.disabled = true;
+      try {
+        await api(`/api/issues/${encodeURIComponent(issue.report.id)}`, { status: status.value }, "PATCH");
+        await refreshTracker();
+        setMessage(document.querySelector("#tracker-message"), "Workflow state bol uložený lokálne.", "success");
+      } catch (error) {
+        status.value = issue.status;
+        setMessage(document.querySelector("#tracker-message"), error.message, "error");
+      } finally {
+        status.disabled = false;
+      }
+    });
+
+    card.append(identity, signals, status);
+    list.append(card);
+  });
+}
+
+async function refreshTracker() {
+  const response = await fetch("/api/issues", { headers: { Accept: "application/json" } });
+  const data = await response.json().catch(() => ({ detail: "Neplatná odpoveď servera." }));
+  if (!response.ok) throw new Error(data.detail || "Tracker sa nepodarilo načítať.");
+  renderTracker(data);
+}
+
 document.querySelector("#load-sample").addEventListener("click", () => {
   fillForm(sample);
   setMessage(formMessage, "Syntetický príklad je pripravený.", "success");
@@ -133,7 +228,8 @@ form.addEventListener("submit", async (event) => {
   triageButton.querySelector("span").textContent = "AI analyzuje…";
   setMessage(formMessage, "Report sa lokálne rediguje a bezpečne odosiela modelu.");
   try {
-    currentEntry = await api("/api/triage", reportFromForm());
+    currentReport = reportFromForm();
+    currentEntry = await api("/api/triage", currentReport);
     renderResult(currentEntry);
     setMessage(formMessage, "Triage je hotová. Skontroluj návrh a pridaj ľudský verdikt.", "success");
   } catch (error) {
@@ -153,18 +249,39 @@ document.querySelectorAll("[data-verdict]").forEach((button) => {
 });
 
 saveVerdictButton.addEventListener("click", async () => {
-  if (!currentEntry || !selectedVerdict) return;
+  if (!currentEntry || !currentReport || !selectedVerdict) return;
   try {
     const data = await api("/api/verdict", {
+      report: currentReport,
       entry: currentEntry,
       verdict: selectedVerdict,
       notes: document.querySelector("#human-notes").value,
     });
     setMessage(verdictMessage, `Verdikt „${data.verdict}“ bol uložený lokálne.`, "success");
     saveVerdictButton.disabled = true;
+    await refreshTracker();
   } catch (error) {
     setMessage(verdictMessage, error.message, "error");
   }
+});
+
+document.querySelector("#tracker-filter").addEventListener("change", () => {
+  renderTracker({
+    issues: trackerIssues,
+    summary: {
+      total: trackerIssues.length,
+      statuses: ["inbox", "investigating", "planned", "resolved"].reduce(
+        (counts, status) => ({
+          ...counts,
+          [status]: trackerIssues.filter((issue) => issue.status === status).length,
+        }),
+        {},
+      ),
+      average_confidence: trackerIssues.length
+        ? trackerIssues.reduce((sum, issue) => sum + issue.entry.result.confidence, 0) / trackerIssues.length
+        : 0,
+    },
+  });
 });
 
 fetch("/api/health")
@@ -179,3 +296,7 @@ fetch("/api/health")
     status.classList.add("error");
     status.querySelector("span:last-child").textContent = "Server nie je dostupný";
   });
+
+refreshTracker().catch((error) => {
+  setMessage(document.querySelector("#tracker-message"), error.message, "error");
+});

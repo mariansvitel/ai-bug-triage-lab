@@ -24,6 +24,8 @@ The local operator and reviewed source code are trusted only within the private 
 | Unauthorized GitHub mutation | No GitHub token or write tool in the application |
 | Unbounded spend | One-report CLI, explicit execution, configurable model, platform budget controls |
 | Sensitive output committed | Generated output defaults to ignored `artifacts/` |
+| Tracker corruption or partial write | Typed load validation and atomic file replacement |
+| Unreviewed report enters workflow | Tracker upsert happens only with an explicit human verdict |
 | Dependency compromise | Minimal dependencies, Dependabot, offline CI tests |
 
 ## Non-goals
@@ -31,3 +33,7 @@ The local operator and reviewed source code are trusted only within the private 
 The pilot does not prove production security, detect every secret type, replace a
 security review, execute issue attachments, browse issue links, or automatically
 change GitHub content.
+
+The local tracker is not an authorization system or production database. It stores
+only synthetic pilot reports under ignored `artifacts/` and remains subject to the
+same local-machine access boundary as the Decision Ledger.
