@@ -11,7 +11,7 @@ measure where AI helps, where it fails, and when it should abstain.
 
 ## What the pilot does
 
-Given a bug report, the local CLI can return a typed recommendation containing:
+Given a bug report, the local web UI or CLI can return a typed recommendation containing:
 
 - summary, category, severity, and priority;
 - missing information and follow-up questions;
@@ -61,6 +61,21 @@ ai-bug-triage data/sample-report.json --ledger artifacts/decision-ledger.jsonl
 ```
 
 The default model is `gpt-5.6-terra`. Override it with `OPENAI_MODEL` or `--model`.
+
+## Local web interface
+
+Start the private local frontend from PowerShell:
+
+```powershell
+.\scripts\start-web.ps1
+```
+
+Then open [http://127.0.0.1:8000](http://127.0.0.1:8000). The startup script reads
+the existing key into the server process from an ignored `.env.local`; the key is
+never embedded in HTML or browser JavaScript. The server binds only to localhost.
+
+The interface supports dry-run validation, AI triage, safety flags, confidence,
+and a human verdict saved to the ignored local Decision Ledger.
 
 ## Offline verification
 
