@@ -20,8 +20,9 @@
         <nav>
           <a class="nav-item active" href="#workspace"><span>01</span> Triage workspace</a>
           <a class="nav-item" href="#safety"><span>02</span> Safety gate</a>
-          <a class="nav-item" href="#ledger"><span>03</span> Decision ledger</a>
-          <a class="nav-item" href="#tracker"><span>04</span> Local tracker</a>
+          <a class="nav-item" href="#duplicates"><span>03</span> Duplicate radar</a>
+          <a class="nav-item" href="#ledger"><span>04</span> Decision ledger</a>
+          <a class="nav-item" href="#tracker"><span>05</span> Local tracker</a>
         </nav>
 
         <div class="sidebar-note">
@@ -163,9 +164,43 @@
           </section>
         </section>
 
+        <section class="panel duplicate-panel" id="duplicates">
+          <div class="duplicate-heading">
+            <div>
+              <span class="step-number">03 / DUPLICATE RADAR</span>
+              <h2>Porovnaj s lokálnou pamäťou projektu</h2>
+              <p>Server vyberie najviac päť kandidátov z ignorovaného trackeru, znovu ich rediguje a AI smie odporučiť iba existujúce lokálne ID.</p>
+            </div>
+            <button type="button" id="duplicate-button" class="secondary-button">Hľadať možné duplicity</button>
+          </div>
+
+          <div id="duplicate-empty" class="duplicate-empty">
+            <strong>Porovnanie sa spúšťa iba na požiadanie.</strong>
+            <span>Žiadny report sa automaticky nezlúči, nezavrie ani nezmení na GitHube.</span>
+          </div>
+
+          <div id="duplicate-content" hidden>
+            <div class="duplicate-summary">
+              <div><span class="eyebrow">Odporúčanie AI</span><strong id="duplicate-recommendation"></strong></div>
+              <div class="duplicate-meta">
+                <span id="duplicate-confidence"></span>
+                <span id="duplicate-candidate-count"></span>
+                <span id="duplicate-model"></span>
+              </div>
+            </div>
+            <div id="duplicate-flags" class="safety-flags"></div>
+            <div id="duplicate-list" class="duplicate-list"></div>
+            <div id="duplicate-no-matches" class="duplicate-empty" hidden>
+              <strong>AI nenašla pravdepodobnú duplicitu.</strong>
+              <span>Aj tento výsledok je iba odporúčanie a nie dôkaz jedinečnosti reportu.</span>
+            </div>
+          </div>
+          <div id="duplicate-message" class="message" role="status" aria-live="polite"></div>
+        </section>
+
         <section class="panel review-panel" id="ledger">
           <div>
-            <span class="step-number">03 / HUMAN VERDICT</span>
+            <span class="step-number">04 / HUMAN VERDICT</span>
             <h2>Potvrď alebo oprav rozhodnutie</h2>
             <p>Verdikt sa uloží iba do lokálneho ignorovaného Decision Ledgeru.</p>
           </div>
@@ -187,7 +222,7 @@
         <section class="panel tracker-panel" id="tracker">
           <div class="tracker-heading">
             <div>
-              <span class="step-number">04 / LOCAL TRACKER</span>
+              <span class="step-number">05 / LOCAL TRACKER</span>
               <h2>Fronta rozhodnutí, nie automatizácie</h2>
               <p>Report sa sem dostane až po ľudskom verdikte. Dáta zostávajú v ignorovanom lokálnom artefakte.</p>
             </div>

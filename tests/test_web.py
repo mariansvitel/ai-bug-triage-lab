@@ -3,7 +3,13 @@ from pathlib import Path
 import httpx
 import pytest
 
-from ai_bug_triage.models import LedgerEntry, TriageResult
+from ai_bug_triage.models import (
+    DuplicateMatch,
+    DuplicateSearchEntry,
+    DuplicateSearchResult,
+    LedgerEntry,
+    TriageResult,
+)
 from ai_bug_triage.web import create_app
 
 pytestmark = pytest.mark.anyio
@@ -62,6 +68,32 @@ def fake_entry() -> LedgerEntry:
     )
 
 
+def fake_duplicate_entry() -> DuplicateSearchEntry:
+    return DuplicateSearchEntry(
+        run_id="duplicate-run-test",
+        created_at="2026-08-29T00:00:00+00:00",
+        query_bug_id="WEB-TEST-1",
+        model="test-model",
+        candidate_ids=["WEB-OLD-1"],
+        result=DuplicateSearchResult(
+            recommendation="review_possible_duplicate",
+            matches=[
+                DuplicateMatch(
+                    bug_id="WEB-OLD-1",
+                    likelihood=0.82,
+                    matching_signals=["same blocked form"],
+                    differences=["different environment"],
+                    rationale="Synthetic comparison.",
+                )
+            ],
+            confidence=0.76,
+            prompt_injection_detected=False,
+            secret_exposure_suspected=False,
+            human_review_required=True,
+        ),
+    )
+
+
 async def test_home_has_security_headers_and_no_key_value(monkeypatch) -> None:
     monkeypatch.setenv("OPENAI_API_KEY", "local-test-value")
     transport = httpx.ASGITransport(app=create_app())
@@ -101,6 +133,27 @@ async def test_triage_uses_server_side_key_and_returns_typed_result(monkeypatch)
         headers = await csrf_headers(client)
         response = await client.post("/api/triage", json=report_payload(), headers=headers)
     assert response.status_code == 200
+    assert response.json()["result"]["human_review_required"] is True
+    assert "local-test-value" not in response.text
+
+
+async def test_duplicate_search_is_csrf_protected_and_returns_only_typed_result(
+    monkeypatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "local-test-value")
+    monkeypatch.setattr("ai_bug_triage.web.TRACKER_PATH", tmp_path / "tracker.json")
+    monkeypatch.setattr(
+        "ai_bug_triage.web.search_duplicates", lambda report, issues: fake_duplicate_entry()
+    )
+    transport = httpx.ASGITransport(app=create_app())
+    async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+        blocked = await client.post("/api/duplicates", json=report_payload())
+        headers = await csrf_headers(client)
+        response = await client.post("/api/duplicates", json=report_payload(), headers=headers)
+
+    assert blocked.status_code == 403
+    assert response.status_code == 200
+    assert response.json()["result"]["matches"][0]["bug_id"] == "WEB-OLD-1"
     assert response.json()["result"]["human_review_required"] is True
     assert "local-test-value" not in response.text
 

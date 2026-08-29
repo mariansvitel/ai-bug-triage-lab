@@ -24,6 +24,11 @@ After a human verdict, the private web interface can place the synthetic report 
 local tracker with `inbox`, `investigating`, `planned`, and `resolved` states. This is
 an ignored local learning artifact, not a GitHub issue or external system of record.
 
+The **Duplicate Radar** first creates a deterministic shortlist of at most five local
+tracker reports. Only a minimized, redacted subset is sent for structured AI
+comparison. Returned IDs are validated against that shortlist and remain a human-review
+recommendation; the feature cannot merge, close, or modify a GitHub issue.
+
 ## Safety model
 
 - Input is treated as untrusted data, never as instructions.
@@ -81,7 +86,8 @@ never embedded in HTML or browser JavaScript. The server binds only to localhost
 The interface supports dry-run validation, AI triage, safety flags, confidence,
 and a human verdict saved to the ignored local Decision Ledger. Reviewed reports are
 also upserted into an ignored local tracker dashboard so AI confidence, human verdict,
-and workflow state remain inspectable together.
+and workflow state remain inspectable together. Duplicate Radar can compare the current
+synthetic form with this local tracker on demand.
 
 ## Offline verification
 

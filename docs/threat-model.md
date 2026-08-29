@@ -26,6 +26,8 @@ The local operator and reviewed source code are trusted only within the private 
 | Sensitive output committed | Generated output defaults to ignored `artifacts/` |
 | Tracker corruption or partial write | Typed load validation and atomic file replacement |
 | Unreviewed report enters workflow | Tracker upsert happens only with an explicit human verdict |
+| Duplicate search leaks full local history | Deterministic shortlist, five-candidate cap, field minimization, and fresh local redaction |
+| Model invents a duplicate ID | Server rejects IDs outside the exact local shortlist; human review stays mandatory |
 | Dependency compromise | Minimal dependencies, Dependabot, offline CI tests |
 
 ## Non-goals
