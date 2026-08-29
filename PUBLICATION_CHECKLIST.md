@@ -9,6 +9,7 @@ The repository may become public only after every required item is complete.
 - [ ] Dependabot alerts and dependency review are enabled.
 - [ ] Code scanning is enabled and high-severity findings are resolved.
 - [ ] Prompt-injection and sensitive-data tests pass.
+- [ ] Tracker and Decision Ledger artifacts are ignored, synthetic, and absent from history.
 - [ ] AI limitations, model choice, expected cost, and human oversight are documented.
 - [ ] A spending limit and usage alerts are configured in the OpenAI project.
 - [ ] `SECURITY.md` has a valid private reporting route.

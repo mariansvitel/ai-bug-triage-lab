@@ -20,6 +20,10 @@ Given a bug report, the local web UI or CLI can return a typed recommendation co
 - data-sensitivity and prompt-injection signals;
 - confidence, rationale, and a mandatory human-review flag.
 
+After a human verdict, the private web interface can place the synthetic report in a
+local tracker with `inbox`, `investigating`, `planned`, and `resolved` states. This is
+an ignored local learning artifact, not a GitHub issue or external system of record.
+
 ## Safety model
 
 - Input is treated as untrusted data, never as instructions.
@@ -75,7 +79,9 @@ the existing key into the server process from an ignored `.env.local`; the key i
 never embedded in HTML or browser JavaScript. The server binds only to localhost.
 
 The interface supports dry-run validation, AI triage, safety flags, confidence,
-and a human verdict saved to the ignored local Decision Ledger.
+and a human verdict saved to the ignored local Decision Ledger. Reviewed reports are
+also upserted into an ignored local tracker dashboard so AI confidence, human verdict,
+and workflow state remain inspectable together.
 
 ## Offline verification
 

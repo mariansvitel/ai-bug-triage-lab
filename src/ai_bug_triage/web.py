@@ -5,6 +5,7 @@ import json
 import os
 import secrets
 from pathlib import Path
+from threading import Lock
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -12,11 +13,14 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from openai import OpenAIError
 
-from .models import BugReport, LedgerEntry, VerdictSubmission
+from .models import BugReport, LedgerEntry, StatusSubmission, VerdictSubmission
+from .tracker import load_tracker, tracker_summary, update_issue_status, upsert_issue
 from .triage import DEFAULT_MODEL, append_ledger, prepare_report, triage_report
 
 PACKAGE_ROOT = Path(__file__).parent
 LEDGER_PATH = Path("artifacts/decision-ledger.jsonl")
+TRACKER_PATH = Path("artifacts/tracker.json")
+TRACKER_LOCK = Lock()
 MAX_REQUEST_BYTES = 64 * 1024
 CSRF_COOKIE = "triage_csrf"
 ALLOWED_ORIGINS = {
@@ -112,14 +116,61 @@ def create_app() -> FastAPI:
     @app.post("/api/verdict")
     async def save_verdict(submission: VerdictSubmission, request: Request):
         _require_csrf(request)
+        if submission.report.id != submission.entry.bug_id:
+            raise HTTPException(status_code=422, detail="Report and triage entry IDs do not match.")
         entry: LedgerEntry = submission.entry.model_copy(
             update={
                 "human_verdict": submission.verdict,
                 "human_notes": submission.notes.strip() or None,
             }
         )
-        append_ledger(entry, LEDGER_PATH)
-        return {"saved": True, "run_id": entry.run_id, "verdict": entry.human_verdict}
+        try:
+            with TRACKER_LOCK:
+                append_ledger(entry, LEDGER_PATH)
+                tracked = upsert_issue(submission.report, entry, TRACKER_PATH)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            raise HTTPException(
+                status_code=500,
+                detail="The local decision evidence could not be saved.",
+            ) from exc
+        return {
+            "saved": True,
+            "run_id": entry.run_id,
+            "verdict": entry.human_verdict,
+            "tracked_issue": tracked.model_dump(mode="json"),
+        }
+
+    @app.get("/api/issues")
+    async def list_issues():
+        try:
+            with TRACKER_LOCK:
+                issues = load_tracker(TRACKER_PATH)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            raise HTTPException(
+                status_code=500, detail="The local tracker data is invalid."
+            ) from exc
+        return {
+            "issues": [issue.model_dump(mode="json") for issue in issues],
+            "summary": tracker_summary(issues),
+        }
+
+    @app.patch("/api/issues/{bug_id}")
+    async def change_issue_status(
+        bug_id: str,
+        submission: StatusSubmission,
+        request: Request,
+    ):
+        _require_csrf(request)
+        try:
+            with TRACKER_LOCK:
+                issue = update_issue_status(bug_id, submission.status, TRACKER_PATH)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="Tracked issue was not found.") from exc
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            raise HTTPException(
+                status_code=500, detail="The local tracker could not be updated."
+            ) from exc
+        return {"updated": True, "issue": issue.model_dump(mode="json")}
 
     return app
 

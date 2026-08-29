@@ -21,6 +21,7 @@
           <a class="nav-item active" href="#workspace"><span>01</span> Triage workspace</a>
           <a class="nav-item" href="#safety"><span>02</span> Safety gate</a>
           <a class="nav-item" href="#ledger"><span>03</span> Decision ledger</a>
+          <a class="nav-item" href="#tracker"><span>04</span> Local tracker</a>
         </nav>
 
         <div class="sidebar-note">
@@ -181,6 +182,40 @@
             <button type="button" id="save-verdict" class="primary-button" disabled>Uložiť do ledgeru</button>
             <div id="verdict-message" class="message" role="status" aria-live="polite"></div>
           </div>
+        </section>
+
+        <section class="panel tracker-panel" id="tracker">
+          <div class="tracker-heading">
+            <div>
+              <span class="step-number">04 / LOCAL TRACKER</span>
+              <h2>Fronta rozhodnutí, nie automatizácie</h2>
+              <p>Report sa sem dostane až po ľudskom verdikte. Dáta zostávajú v ignorovanom lokálnom artefakte.</p>
+            </div>
+            <label class="tracker-filter">
+              <span>Zobraziť stav</span>
+              <select id="tracker-filter">
+                <option value="all">All issues</option>
+                <option value="inbox">Inbox</option>
+                <option value="investigating">Investigating</option>
+                <option value="planned">Planned</option>
+                <option value="resolved">Resolved</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="tracker-overview" aria-label="Tracker summary">
+            <div><span>Total</span><strong id="tracker-total">0</strong></div>
+            <div><span>Active</span><strong id="tracker-active">0</strong></div>
+            <div><span>Resolved</span><strong id="tracker-resolved">0</strong></div>
+            <div><span>Avg. confidence</span><strong id="tracker-confidence">0%</strong></div>
+          </div>
+
+          <div id="tracker-list" class="tracker-list"></div>
+          <div id="tracker-empty" class="tracker-empty">
+            <strong>Tracker je zatiaľ prázdny.</strong>
+            <span>Spusť triage, pridaj ľudský verdikt a report sa objaví v lokálnej fronte.</span>
+          </div>
+          <div id="tracker-message" class="message" role="status" aria-live="polite"></div>
         </section>
       </main>
     </div>

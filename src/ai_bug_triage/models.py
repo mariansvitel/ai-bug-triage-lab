@@ -43,6 +43,13 @@ class RecommendedAction(str, Enum):
     defer = "defer"
 
 
+class IssueStatus(str, Enum):
+    inbox = "inbox"
+    investigating = "investigating"
+    planned = "planned"
+    resolved = "resolved"
+
+
 class BugReport(StrictModel):
     id: str = Field(min_length=1, max_length=80)
     title: str = Field(min_length=1, max_length=300)
@@ -86,6 +93,19 @@ class LedgerEntry(StrictModel):
 
 
 class VerdictSubmission(StrictModel):
+    report: BugReport
     entry: LedgerEntry
     verdict: Literal["accepted", "edited", "rejected"]
     notes: str = Field(default="", max_length=1_000)
+
+
+class StatusSubmission(StrictModel):
+    status: IssueStatus
+
+
+class TrackedIssue(StrictModel):
+    report: BugReport
+    entry: LedgerEntry
+    status: IssueStatus = IssueStatus.inbox
+    created_at: str
+    updated_at: str
