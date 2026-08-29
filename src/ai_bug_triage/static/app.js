@@ -3,6 +3,7 @@ const form = document.querySelector("#bug-form");
 const formMessage = document.querySelector("#form-message");
 const verdictMessage = document.querySelector("#verdict-message");
 const triageButton = document.querySelector("#triage-button");
+const duplicateButton = document.querySelector("#duplicate-button");
 const saveVerdictButton = document.querySelector("#save-verdict");
 let currentEntry = null;
 let currentReport = null;
@@ -112,6 +113,68 @@ function renderResult(entry) {
   document.querySelectorAll("[data-verdict]").forEach((button) => button.classList.remove("selected"));
 }
 
+function renderDuplicateResult(entry) {
+  const result = entry.result;
+  const recommendationLabels = {
+    no_likely_duplicate: "žiadna pravdepodobná duplicita",
+    review_possible_duplicate: "skontrolovať možnú duplicitu",
+    likely_duplicate: "pravdepodobná duplicita",
+  };
+  document.querySelector("#duplicate-empty").hidden = true;
+  document.querySelector("#duplicate-content").hidden = false;
+  document.querySelector("#duplicate-recommendation").textContent = recommendationLabels[result.recommendation] || result.recommendation.replaceAll("_", " ");
+  document.querySelector("#duplicate-confidence").textContent = `${Math.round(result.confidence * 100)}% confidence`;
+  document.querySelector("#duplicate-model").textContent = entry.model;
+  document.querySelector("#duplicate-candidate-count").textContent = entry.candidate_ids.length === 1 ? "1 lokálny kandidát" : `${entry.candidate_ids.length} lokálnych kandidátov`;
+
+  const flags = document.querySelector("#duplicate-flags");
+  flags.replaceChildren();
+  addFlag(flags, "Ľudská kontrola povinná");
+  addFlag(flags, result.prompt_injection_detected ? "Prompt injection podozrenie" : "Bez prompt injection signálu", result.prompt_injection_detected);
+  addFlag(flags, result.secret_exposure_suspected ? "Možný únik tajomstva" : "Bez signálu úniku tajomstva", result.secret_exposure_suspected);
+
+  const list = document.querySelector("#duplicate-list");
+  const noMatches = document.querySelector("#duplicate-no-matches");
+  list.replaceChildren();
+  noMatches.hidden = result.matches.length > 0;
+  result.matches.forEach((match) => {
+    const card = document.createElement("article");
+    card.className = "duplicate-card";
+
+    const heading = document.createElement("div");
+    heading.className = "duplicate-card-heading";
+    const id = document.createElement("strong");
+    id.textContent = match.bug_id;
+    const likelihood = document.createElement("span");
+    likelihood.textContent = `${Math.round(match.likelihood * 100)}% podobnosť`;
+    heading.append(id, likelihood);
+
+    const rationale = document.createElement("p");
+    rationale.textContent = match.rationale;
+    const columns = document.createElement("div");
+    columns.className = "duplicate-columns";
+    [
+      ["Spoločné signály", match.matching_signals],
+      ["Rozdiely", match.differences],
+    ].forEach(([label, values]) => {
+      const group = document.createElement("div");
+      const title = document.createElement("span");
+      title.className = "eyebrow";
+      title.textContent = label;
+      const items = document.createElement("ul");
+      (values.length ? values : ["AI neuviedla žiadny signál."]).forEach((value) => {
+        const item = document.createElement("li");
+        item.textContent = value;
+        items.append(item);
+      });
+      group.append(title, items);
+      columns.append(group);
+    });
+    card.append(heading, rationale, columns);
+    list.append(card);
+  });
+}
+
 function trackerStatusLabel(status) {
   const labels = {
     inbox: "Inbox",
@@ -218,6 +281,23 @@ document.querySelector("#validate-button").addEventListener("click", async () =>
     setMessage(formMessage, count ? `Dáta sú platné. Redakcia zachytila ${count} citlivé vzory.` : "Dáta sú platné. Nenašli sa citlivé vzory.", "success");
   } catch (error) {
     setMessage(formMessage, error.message, "error");
+  }
+});
+
+duplicateButton.addEventListener("click", async () => {
+  if (!form.reportValidity()) return;
+  duplicateButton.disabled = true;
+  duplicateButton.textContent = "AI porovnáva…";
+  setMessage(document.querySelector("#duplicate-message"), "Lokálny shortlist sa rediguje a porovnáva s aktuálnym reportom.");
+  try {
+    const entry = await api("/api/duplicates", reportFromForm());
+    renderDuplicateResult(entry);
+    setMessage(document.querySelector("#duplicate-message"), "Porovnanie je hotové. Výsledok musí potvrdiť človek.", "success");
+  } catch (error) {
+    setMessage(document.querySelector("#duplicate-message"), error.message, "error");
+  } finally {
+    duplicateButton.disabled = false;
+    duplicateButton.textContent = "Hľadať možné duplicity";
   }
 });
 

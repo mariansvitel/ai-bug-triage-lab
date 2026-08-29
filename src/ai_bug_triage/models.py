@@ -79,6 +79,37 @@ class TriageResult(StrictModel):
     human_review_required: Literal[True]
 
 
+class DuplicateMatch(StrictModel):
+    bug_id: str = Field(min_length=1, max_length=80)
+    likelihood: float = Field(ge=0, le=1)
+    matching_signals: list[str] = Field(max_length=6)
+    differences: list[str] = Field(max_length=6)
+    rationale: str = Field(min_length=1, max_length=800)
+
+
+class DuplicateSearchResult(StrictModel):
+    recommendation: Literal[
+        "no_likely_duplicate",
+        "review_possible_duplicate",
+        "likely_duplicate",
+    ]
+    matches: list[DuplicateMatch] = Field(max_length=5)
+    confidence: float = Field(ge=0, le=1)
+    prompt_injection_detected: bool
+    secret_exposure_suspected: bool
+    human_review_required: Literal[True]
+
+
+class DuplicateSearchEntry(StrictModel):
+    run_id: str
+    created_at: str
+    query_bug_id: str
+    model: str
+    candidate_ids: list[str] = Field(max_length=5)
+    api_response_id: str | None = None
+    result: DuplicateSearchResult
+
+
 class LedgerEntry(StrictModel):
     run_id: str
     created_at: str

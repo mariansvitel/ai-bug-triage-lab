@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from openai import OpenAIError
 
+from .duplicates import search_duplicates
 from .models import BugReport, LedgerEntry, StatusSubmission, VerdictSubmission
 from .tracker import load_tracker, tracker_summary, update_issue_status, upsert_issue
 from .triage import DEFAULT_MODEL, append_ledger, prepare_report, triage_report
@@ -111,6 +112,25 @@ def create_app() -> FastAPI:
             raise HTTPException(
                 status_code=502,
                 detail="The AI provider could not complete this request.",
+            ) from exc
+
+    @app.post("/api/duplicates")
+    def run_duplicate_search(report: BugReport, request: Request):
+        _require_csrf(request)
+        if not os.getenv("OPENAI_API_KEY"):
+            raise HTTPException(status_code=503, detail="Server API key is not configured.")
+        try:
+            with TRACKER_LOCK:
+                issues = load_tracker(TRACKER_PATH)
+            return search_duplicates(report, issues)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            raise HTTPException(
+                status_code=500, detail="The local tracker data is invalid."
+            ) from exc
+        except (OpenAIError, RuntimeError) as exc:
+            raise HTTPException(
+                status_code=502,
+                detail="The AI provider could not complete duplicate comparison.",
             ) from exc
 
     @app.post("/api/verdict")
