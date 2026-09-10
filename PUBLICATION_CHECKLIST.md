@@ -13,5 +13,5 @@ The repository may become public only after every required item is complete.
 - [x] AI limitations, model choice, expected cost, and human oversight are documented.
 - [ ] A spending limit and usage alerts are configured in the OpenAI project.
 - [x] `SECURITY.md` has a valid private reporting route.
-- [ ] A license has been deliberately selected.
-- [ ] The repository owner performs a final Safety Gate review.
+- [x] The owner selected the MIT license on 2026-09-10.
+- [x] The repository owner approved public release on 2026-09-10.
