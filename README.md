@@ -6,8 +6,8 @@ The distinctive feature is an **AI Decision Ledger**: every recommendation can b
 compared with a later human verdict. The goal is not to automate authority, but to
 measure where AI helps, where it fails, and when it should abstain.
 
-> Status: private research pilot. The AI can suggest; it cannot edit, label, close,
-> assign, or publish GitHub issues.
+> Status: approved for public release on 2026-09-10. The AI can suggest; it cannot
+> edit, label, close, assign, or publish GitHub issues.
 
 ## What the pilot does
 
@@ -100,8 +100,11 @@ The test suite never calls the OpenAI API.
 
 ## Publication gate
 
-Keep the repository private until all items in [PUBLICATION_CHECKLIST.md](PUBLICATION_CHECKLIST.md)
-are complete. A license is intentionally deferred until the owner chooses one.
+Release controls are tracked in [PUBLICATION_CHECKLIST.md](PUBLICATION_CHECKLIST.md).
+
+## License
+
+[MIT](LICENSE)
 
 ## Official references
 
