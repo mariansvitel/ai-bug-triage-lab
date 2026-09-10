@@ -2,16 +2,16 @@
 
 ## Supported status
 
-This repository is an experimental, private learning project. It is not approved
+This repository is an experimental learning project. It is not approved
 for production use or for processing confidential, personal, regulated, or customer
 data.
 
 ## Reporting a vulnerability
 
 Do not open a public issue containing exploit details, credentials, personal data,
-or private logs. While the repository is private, contact the repository owner
-directly. Before public release, GitHub private vulnerability reporting must be
-enabled and this section updated with the final contact route.
+or private logs. Use GitHub's private vulnerability reporting form in the Security
+tab when available. Otherwise, contact the repository owner through a trusted
+private channel.
 
 ## Secret handling
 
