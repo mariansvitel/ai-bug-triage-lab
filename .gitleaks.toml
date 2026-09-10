@@ -1,0 +1,4 @@
+title = "AI Bug Triage Lab secret scanning"
+
+[extend]
+useDefault = true
