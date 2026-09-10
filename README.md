@@ -6,8 +6,8 @@ The distinctive feature is an **AI Decision Ledger**: every recommendation can b
 compared with a later human verdict. The goal is not to automate authority, but to
 measure where AI helps, where it fails, and when it should abstain.
 
-> Status: approved for public release on 2026-09-10. The AI can suggest; it cannot
-> edit, label, close, assign, or publish GitHub issues.
+> Status: public research lab. The AI can suggest; it cannot edit, label, close,
+> assign, or publish GitHub issues.
 
 ## What the pilot does
 

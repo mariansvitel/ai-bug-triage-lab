@@ -29,13 +29,16 @@ directory. Re-running with an isolated ignored `artifacts/pytest-audit` base pro
 - bounded Dependabot queues with unattended major upgrades excluded;
 - visibility-neutral private vulnerability reporting guidance.
 
-## Remaining owner and transition decisions
+## Public transition completed
 
-1. Deliberately choose an open-source license.
-2. Confirm the OpenAI project budget and usage alerts outside this repository.
-3. Approve public visibility.
-4. Enable GitHub secret scanning, push protection, dependency review, CodeQL, private
-   vulnerability reporting, and protected-branch checks during the transition.
+The owner selected MIT and approved public visibility. GitHub secret scanning, push
+protection, Dependabot security updates, private vulnerability reporting, and CodeQL
+default setup are enabled. Dependency Review is enforced in pull requests, and the
+protected `main` branch requires the repository's security and quality checks.
+
+The OpenAI project budget and usage alerts remain an external operational control;
+they cannot be verified from this repository and remain unchecked in the publication
+checklist.
 
 This project remains a learning lab, not a production bug-tracking or authorization
 system. It must not process confidential reports or mutate GitHub state.
